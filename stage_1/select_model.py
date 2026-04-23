@@ -7,17 +7,17 @@ import wandb
 from torch_fidelity import calculate_metrics
 
 MODELS = {
-    "flux": "black-forest-labs/FLUX.1-schnell",
-    "sdxl": "stabilityai/stable-diffusion-xl-base-1.0",
-    "sana": "Efficient-Large-Model/Sana_1600M_1024px_diffusers",
+    "sd15": "stable-diffusion-v1-5/stable-diffusion-v1-5",
+    "lumina2": "Alpha-VLLM/Lumina-Image-2.0",
+    "sana": "Efficient-Large-Model/Sana_600M_512px_diffusers",
 }
 
 HORSE_DATASET = "./data/horses"
 OUTPUT_DIR = "./stage1"
 PROMPT = "a photo of a horse"
 NUM_IMAGES = 100
-LORA_RANK = 4
-TRAIN_STEPS = 500
+LORA_RANK = 2
+TRAIN_STEPS = 300
 
 
 def train_lora(model_name, model_id):
@@ -25,8 +25,8 @@ def train_lora(model_name, model_id):
     out.mkdir(parents=True, exist_ok=True)
 
     script = {
-        "flux": "diffusers/examples/dreambooth/train_dreambooth_lora_flux.py",
-        "sdxl": "diffusers/examples/dreambooth/train_dreambooth_lora_sdxl.py",
+        "sd15": "diffusers/examples/dreambooth/train_dreambooth_lora.py",
+        "lumina2": "diffusers/examples/dreambooth/train_dreambooth_lora_lumina2.py",
         "sana": "diffusers/examples/dreambooth/train_dreambooth_lora_sana.py",
     }[model_name]
 
@@ -41,7 +41,7 @@ def train_lora(model_name, model_id):
         f"--rank={LORA_RANK}",
         f"--max_train_steps={TRAIN_STEPS}",
         "--train_batch_size=1",
-        f"--mixed_precision={'bf16' if model_name == 'flux' else 'fp16'}",
+        f"--mixed_precision={'bf16' if model_name in ('sana', 'lumina2') else 'fp16'}",
         "--gradient_checkpointing",
         "--report_to=wandb",
     ]
