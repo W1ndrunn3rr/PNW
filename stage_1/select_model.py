@@ -1,3 +1,4 @@
+import os
 import subprocess
 from pathlib import Path
 
@@ -15,7 +16,7 @@ HORSE_DATASET = "./data/horses"
 OUTPUT_DIR = "./stage1"
 PROMPT = "a photo of a horse"
 NUM_IMAGES = 100
-LORA_RANK = 8
+LORA_RANK = 4
 TRAIN_STEPS = 500
 
 
@@ -40,12 +41,14 @@ def train_lora(model_name, model_id):
         f"--rank={LORA_RANK}",
         f"--max_train_steps={TRAIN_STEPS}",
         "--train_batch_size=1",
-        "--mixed_precision=fp16",
+        f"--mixed_precision={'bf16' if model_name == 'flux' else 'fp16'}",
         "--gradient_checkpointing",
         "--report_to=wandb",
     ]
 
-    subprocess.run(cmd, check=True)
+    env = os.environ.copy()
+    env["PYTORCH_CUDA_ALLOC_CONF"] = "expandable_segments:True"
+    subprocess.run(cmd, check=True, env=env)
 
 
 def generate_images(model_name, model_id):
