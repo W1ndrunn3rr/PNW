@@ -1,0 +1,25 @@
+data_root: ./data/cifar10
+output_dir: ./outputs
+resolution: 512
+
+models:
+  - dreambooth
+  - kandinsky_decoder
+  - kandinsky_prior
+  - wuerstchen
+
+lora:
+  rank: 4
+  lr: 1e-4
+  batch_size: 1
+  grad_accum: 4
+  max_steps: 500
+  checkpoint_steps: 100
+
+wandb:
+  project: lora-finetuning
+
+hub:
+  push: false
+  prefix: username/my-lora
+  token: null

@@ -1,0 +1,11 @@
+data_root: ./data/raw
+output_dir: ./data/prepared
+resolution: 256
+shots_per_class: 50
+
+datasets:
+  - cifar10
+  - flowers102
+  - oxford_pets
+  - stanford_cars
+  - eurosat
