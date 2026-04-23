@@ -58,9 +58,14 @@ def generate_images(model_name, model_id):
     gen_path = Path(OUTPUT_DIR) / model_name / "generated"
     gen_path.mkdir(parents=True, exist_ok=True)
 
+    dtype = torch.bfloat16 if model_name in ("sana", "lumina2") else torch.float16
     pipe = AutoPipelineForText2Image.from_pretrained(
-        model_id, torch_dtype=torch.float16
+        model_id, torch_dtype=dtype
     ).to("cuda")
+
+    if model_name == "sana":
+        pipe.vae.to(torch.bfloat16)
+
     pipe.load_lora_weights(str(lora_path))
 
     for i in range(NUM_IMAGES):
@@ -73,9 +78,10 @@ def generate_images(model_name, model_id):
 
 def compute_metrics(model_name):
     gen_path = str(Path(OUTPUT_DIR) / model_name / "generated")
+    real_path = str(Path(HORSE_DATASET))
 
     metrics = calculate_metrics(
-        input1=HORSE_DATASET,
+        input1=real_path,
         input2=gen_path,
         cuda=torch.cuda.is_available(),
         fid=True,
