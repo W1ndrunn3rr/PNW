@@ -86,7 +86,7 @@ def generate_dataset_images(
     )
     pipe.load_lora_weights(lora_id)
 
-    dataset_output_dir = RESNET_DATA_DIR / dataset_name / "diffused"
+    dataset_output_dir = RESNET_DATA_DIR / dataset_name / "generated"
     dataset_output_dir.mkdir(parents=True, exist_ok=True)
 
     for class_name in classes:

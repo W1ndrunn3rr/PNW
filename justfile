@@ -25,6 +25,9 @@ stage1:
 stage2:
     uv run stage_2/sana_lora_finetune.py
 
+stage3:
+    uv run stage_3/train_resnet.py
+
 prepare-resnet-data:
     uv run scripts/prepare_resnet_data.py
 
