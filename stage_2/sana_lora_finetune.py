@@ -14,7 +14,7 @@ MODEL_NAME = os.getenv(
 )
 TRAIN_SCRIPT = Path("diffusers/examples/dreambooth/train_dreambooth_lora_sana.py")
 OUTPUT_ROOT = Path("outputs/stage2")
-WANDB_PROJECT = os.getenv("WANDB_PROJECT", "stage2-sana-lora")
+WANDB_PROJECT = os.getenv("WANDB_PROJECT", "PNW")
 
 RESOLUTION = int(os.getenv("SANA_RESOLUTION", "512"))
 MAX_TRAIN_STEPS = int(os.getenv("SANA_MAX_TRAIN_STEPS", "300"))

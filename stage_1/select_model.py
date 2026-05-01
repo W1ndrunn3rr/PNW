@@ -63,9 +63,9 @@ def generate_images(model_name, model_id):
     gen_path.mkdir(parents=True, exist_ok=True)
 
     dtype = torch.bfloat16 if model_name in ("sana", "lumina2") else torch.float16
-    pipe = AutoPipelineForText2Image.from_pretrained(
-        model_id, torch_dtype=dtype
-    ).to("cuda")
+    pipe = AutoPipelineForText2Image.from_pretrained(model_id, torch_dtype=dtype).to(
+        "cuda"
+    )
 
     if model_name == "sana":
         pipe.vae.to(torch.bfloat16)
@@ -102,7 +102,7 @@ def compute_metrics(model_name):
 
 
 if __name__ == "__main__":
-    wandb.init(project="stage1-model-selection")
+    wandb.init(project="PNW", name="stage1-model-selection")
 
     results = []
     for model_name, model_id in MODELS.items():

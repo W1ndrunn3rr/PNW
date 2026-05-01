@@ -167,12 +167,6 @@ def train_with_kfold(
 
     train_transform, test_transform = get_transforms(dataset_name)
 
-    # Apply augmentations during training only for "augmented" variant
-    if augmentation_type == "augmented":
-        dataset.transform = train_transform
-    else:
-        dataset.transform = test_transform
-
     num_classes = len(set([label for _, label in dataset]))
     kfold = KFold(n_splits=NUM_FOLDS, shuffle=True, random_state=42)
 
@@ -186,8 +180,18 @@ def train_with_kfold(
     for fold, (train_idx, test_idx) in enumerate(kfold.split(dataset)):
         print(f"  Fold {fold + 1}/{NUM_FOLDS}...")
 
-        train_subset = Subset(dataset, train_idx)
-        test_subset = Subset(dataset, test_idx)
+        # Create separate dataset instances with appropriate transforms
+        # Train dataset: use train_transform only for "augmented" variant
+        if augmentation_type == "augmented":
+            train_dataset = ImageFolderDataset(dataset_path, transform=train_transform)
+        else:
+            train_dataset = ImageFolderDataset(dataset_path, transform=test_transform)
+
+        # Test dataset: always use test_transform (no augmentation on validation)
+        test_dataset = ImageFolderDataset(dataset_path, transform=test_transform)
+
+        train_subset = Subset(train_dataset, train_idx)
+        test_subset = Subset(test_dataset, test_idx)
 
         train_loader = DataLoader(
             train_subset, batch_size=BATCH_SIZE, shuffle=True, num_workers=0
@@ -238,7 +242,7 @@ def train_with_kfold(
 def main() -> None:
     OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
 
-    wandb.init(project="stage3-resnet", name="cross-validation")
+    wandb.init(project="PNW", name="stage3-resnet-cross-validation")
 
     results = {}
 
