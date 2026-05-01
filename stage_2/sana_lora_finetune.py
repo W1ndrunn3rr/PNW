@@ -27,7 +27,7 @@ GRADIENT_ACCUMULATION_STEPS = int(os.getenv("SANA_GRADIENT_ACCUMULATION_STEPS", 
 @dataclass(frozen=True)
 class DatasetConfig:
     name: str
-    dataset_dir: Path
+    hf_dataset_dir: Path
     output_name: str
     validation_prompt: str
 
@@ -35,19 +35,19 @@ class DatasetConfig:
 DATASETS = [
     DatasetConfig(
         name="cifar10",
-        dataset_dir=Path("data/sana_cifar10"),
+        hf_dataset_dir=Path("data/sana_cifar10_hf"),
         output_name="SANA-LoRA-CIFAR10",
         validation_prompt="a low-resolution photo of an airplane, CIFAR-10 style",
     ),
     DatasetConfig(
         name="eurosat_rgb",
-        dataset_dir=Path("data/sana_eurosat_rgb"),
+        hf_dataset_dir=Path("data/sana_eurosat_rgb_hf"),
         output_name="SANA-LoRA-EuroSAT-RGB",
         validation_prompt="a satellite image of AnnualCrop, EuroSAT style",
     ),
     DatasetConfig(
         name="beans",
-        dataset_dir=Path("data/sana_beans"),
+        hf_dataset_dir=Path("data/sana_beans_hf"),
         output_name="SANA-LoRA-Beans",
         validation_prompt="a photo of a bean leaf with healthy",
     ),
@@ -68,14 +68,15 @@ def validate_inputs() -> None:
         )
 
     missing = [
-        config.dataset_dir
+        config.hf_dataset_dir
         for config in DATASETS
-        if not (config.dataset_dir / "train" / "metadata.jsonl").exists()
+        if not (config.hf_dataset_dir / "dataset_info.json").exists()
     ]
     if missing:
         missing_text = ", ".join(str(path) for path in missing)
         raise FileNotFoundError(
-            f"Missing prepared SANA datasets: {missing_text}. Run `just datasets` first."
+            "Missing HF datasets: "
+            f"{missing_text}. Run `python scripts/prepare_sana_datasets.py` first."
         )
 
     if not (os.getenv("WANDB_API_KEY") or os.getenv("WANDB_MODE") == "offline"):
@@ -95,7 +96,9 @@ def train_lora(config: DatasetConfig, namespace: str) -> None:
         "launch",
         str(TRAIN_SCRIPT),
         f"--pretrained_model_name_or_path={MODEL_NAME}",
-        f"--instance_data_dir={config.dataset_dir / 'train'}",
+        f"--dataset_name={config.hf_dataset_dir}",
+        "--image_column=image",
+        "--caption_column=text",
         f"--output_dir={output_dir}",
         "--mixed_precision=bf16",
         f"--resolution={RESOLUTION}",
@@ -121,6 +124,7 @@ def train_lora(config: DatasetConfig, namespace: str) -> None:
     env["WANDB_NAME"] = config.output_name
 
     print(f"Training {config.name} -> {output_dir}")
+    print(f"Using HF dataset {config.hf_dataset_dir}")
     print(f"Pushing to {hub_model_id}")
     subprocess.run(cmd, check=True, env=env)
 
