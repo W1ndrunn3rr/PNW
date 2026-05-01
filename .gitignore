@@ -1,0 +1,42 @@
+# Environment and secrets
+.env
+.env.*
+!.env.example
+
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+
+# Virtual environments
+.venv/
+venv/
+
+# Project data and training artifacts
+data/
+outputs/
+stage1/
+wandb/
+
+# Local editable checkout created by `just setup`
+diffusers/
+
+# Hugging Face / ML caches
+.cache/
+hf_cache/
+*.safetensors
+*.ckpt
+*.pt
+*.pth
+
+# OS / editor
+.DS_Store
+*.swp
+*.swo
+.idea/
+.vscode/
