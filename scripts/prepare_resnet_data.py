@@ -13,7 +13,6 @@ DATASETS = ["cifar10", "eurosat_rgb", "beans"]
 
 
 def copy_dataset_original(dataset_name: str, source_dir: Path, target_dir: Path) -> int:
-    """Copy original dataset to original folder."""
     target_dir.mkdir(parents=True, exist_ok=True)
 
     count = 0
@@ -36,7 +35,6 @@ def copy_dataset_original(dataset_name: str, source_dir: Path, target_dir: Path)
 
 
 def setup_generated_folders(source_dir: Path, target_dir: Path) -> int:
-    """Create empty class folders in generated directory."""
     target_dir.mkdir(parents=True, exist_ok=True)
 
     count = 0
@@ -62,14 +60,12 @@ def prepare_resnet_data() -> None:
 
         print(f"\nPreparing {dataset_name}...")
 
-        # 1. Copy original dataset
         original_dir = dataset_resnet_dir / "original"
         if original_dir.exists():
             rmtree(original_dir)
         original_count = copy_dataset_original(dataset_name, source_dir, original_dir)
         print(f"  Original: copied {original_count} images")
 
-        # 2. Copy for augmented dataset (augmentations applied during training)
         augmented_dir = dataset_resnet_dir / "augmented"
         if augmented_dir.exists():
             rmtree(augmented_dir)
@@ -78,7 +74,6 @@ def prepare_resnet_data() -> None:
             f"  Augmented: copied {augmented_count} images (transforms applied during training)"
         )
 
-        # 3. Setup generated folders (will be populated by generation script)
         generated_dir = dataset_resnet_dir / "generated"
         if generated_dir.exists():
             rmtree(generated_dir)
@@ -92,7 +87,7 @@ def main() -> None:
     RESNET_DATA_DIR.mkdir(exist_ok=True)
     random.seed(42)
     prepare_resnet_data()
-    print(f"\n✅ Resnet data prepared in {RESNET_DATA_DIR}")
+    print(f"\n Resnet data prepared in {RESNET_DATA_DIR}")
     print("   - original/  : Original images (no transforms)")
     print("   - augmented/ : Original images (transforms applied during training)")
     print("   - generated/ : Generated images via LoRA")

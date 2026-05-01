@@ -1,6 +1,3 @@
-#!/usr/bin/env python3
-"""Create captioned ImageFolder datasets for SANA LoRA fine-tuning."""
-
 from __future__ import annotations
 
 import json

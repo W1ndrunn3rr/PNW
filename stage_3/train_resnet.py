@@ -178,22 +178,22 @@ def train_with_kfold(
 
     fold_results = {
         "train_losses": [],
-        "val_losses": [],
+        "test_losses": [],
         "accuracies": [],
         "f1_scores": [],
     }
 
-    for fold, (train_idx, val_idx) in enumerate(kfold.split(dataset)):
+    for fold, (train_idx, test_idx) in enumerate(kfold.split(dataset)):
         print(f"  Fold {fold + 1}/{NUM_FOLDS}...")
 
         train_subset = Subset(dataset, train_idx)
-        val_subset = Subset(dataset, val_idx)
+        test_subset = Subset(dataset, test_idx)
 
         train_loader = DataLoader(
             train_subset, batch_size=BATCH_SIZE, shuffle=True, num_workers=0
         )
-        val_loader = DataLoader(
-            val_subset, batch_size=BATCH_SIZE, shuffle=False, num_workers=0
+        test_loader = DataLoader(
+            test_subset, batch_size=BATCH_SIZE, shuffle=False, num_workers=0
         )
 
         model = create_model(num_classes)
@@ -208,7 +208,7 @@ def train_with_kfold(
 
         for epoch in range(EPOCHS):
             train_loss = train_epoch(model, train_loader, criterion, optimizer, DEVICE)
-            val_loss, accuracy, f1 = evaluate(model, val_loader, criterion, DEVICE)
+            test_loss, accuracy, f1 = evaluate(model, test_loader, criterion, DEVICE)
             scheduler.step()
 
             if f1 > best_f1:
@@ -219,7 +219,7 @@ def train_with_kfold(
                 wandb.log(
                     {
                         "train_loss": train_loss,
-                        "val_loss": val_loss,
+                        "test_loss": test_loss,
                         "accuracy": accuracy,
                         "f1_score": f1,
                         "fold": fold + 1,
@@ -228,7 +228,7 @@ def train_with_kfold(
                 )
 
         fold_results["train_losses"].append(train_loss)
-        fold_results["val_losses"].append(val_loss)
+        fold_results["test_losses"].append(test_loss)
         fold_results["accuracies"].append(accuracy)
         fold_results["f1_scores"].append(f1)
 
@@ -236,7 +236,6 @@ def train_with_kfold(
 
 
 def main() -> None:
-    """Train ResNet-18 on all dataset combinations."""
     OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
 
     wandb.init(project="stage3-resnet", name="cross-validation")
@@ -244,7 +243,7 @@ def main() -> None:
     results = {}
 
     for dataset_name in DATASETS:
-        print(f"\n🔄 Processing {dataset_name}...")
+        print(f"\nProcessing {dataset_name}...")
 
         dataset_results = {}
 
@@ -252,10 +251,10 @@ def main() -> None:
             data_path = RESNET_DATA_DIR / dataset_name / aug_type
 
             if not data_path.exists():
-                print(f"  ⚠️  {aug_type} not found at {data_path}, skipping")
+                print(f"  {aug_type} not found at {data_path}, skipping")
                 continue
 
-            print(f"  🎯 Training on {aug_type}...")
+            print(f"  Training on {aug_type}...")
 
             dataset = ImageFolderDataset(data_path)
             print(
@@ -290,7 +289,7 @@ def main() -> None:
     with open(summary_path, "w") as f:
         json.dump(results, f, indent=2)
 
-    print(f"\n✅ Training complete! Results saved to {OUTPUT_DIR}")
+    print(f"\nTraining complete! Results saved to {OUTPUT_DIR}")
     wandb.finish()
 
 
