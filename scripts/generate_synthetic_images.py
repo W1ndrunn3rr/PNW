@@ -6,15 +6,28 @@ from __future__ import annotations
 from pathlib import Path
 
 import torch
-from diffusers import SanaPipeline
+from diffusers import DiffusionPipeline
 from tqdm import tqdm
+
+
+BASE_MODEL = "Efficient-Large-Model/Sana_1600M_1024px_BF16_diffusers"
+
+
+def get_device() -> str:
+    """Auto-detect best available device."""
+    if torch.cuda.is_available():
+        return "cuda"
+    elif torch.backends.mps.is_available():
+        return "mps"
+    else:
+        return "cpu"
 
 
 RESNET_DATA_DIR = Path("resnet_data")
 
 DATASETS_CONFIG = {
     "cifar10": {
-        "model_id": "W1ndrunn3rr/SANA-LoRA-CIFAR10",
+        "lora_id": "W1ndrunn3rr/SANA-LoRA-CIFAR10",
         "classes": [
             "airplane",
             "automobile",
@@ -31,7 +44,7 @@ DATASETS_CONFIG = {
         "images_per_class": 100,
     },
     "eurosat_rgb": {
-        "model_id": "W1ndrunn3rr/SANA-LoRA-EuroSAT-RGB",
+        "lora_id": "W1ndrunn3rr/SANA-LoRA-EuroSAT-RGB",
         "classes": [
             "AnnualCrop",
             "Forest",
@@ -48,7 +61,7 @@ DATASETS_CONFIG = {
         "images_per_class": 100,
     },
     "beans": {
-        "model_id": "W1ndrunn3rr/SANA-LoRA-Beans",
+        "lora_id": "W1ndrunn3rr/SANA-LoRA-Beans",
         "classes": ["angular_leaf_spot", "bean_rust", "healthy"],
         "prompt_template": "a photo of a bean leaf with {class_name}",
         "images_per_class": 100,
@@ -58,18 +71,20 @@ DATASETS_CONFIG = {
 
 def generate_dataset_images(
     dataset_name: str,
-    model_id: str,
+    lora_id: str,
     classes: list[str],
     prompt_template: str,
     images_per_class: int,
+    device: str,
 ) -> None:
 
-    print(f"  Loading model from {model_id}")
-    device = "cuda" if torch.cuda.is_available() else "cpu"
-    pipe = SanaPipeline.from_pretrained(
-        model_id,
+    print(f"  Loading base model and LoRA from {lora_id}")
+    pipe = DiffusionPipeline.from_pretrained(
+        BASE_MODEL,
         torch_dtype=torch.bfloat16,
-    ).to(device)
+        device_map=device,
+    )
+    pipe.load_lora_weights(lora_id)
 
     dataset_output_dir = RESNET_DATA_DIR / dataset_name / "diffused"
     dataset_output_dir.mkdir(parents=True, exist_ok=True)
@@ -85,13 +100,7 @@ def generate_dataset_images(
         for i in tqdm(range(images_per_class), desc=f"{class_name}", leave=False):
             try:
                 with torch.no_grad():
-                    image = pipe(
-                        prompt=prompt,
-                        num_inference_steps=20,
-                        guidance_scale=4.5,
-                        height=1024,
-                        width=1024,
-                    ).images[0]
+                    image = pipe(prompt).images[0]
 
                 if dataset_name == "cifar10":
                     image = image.resize((32, 32))
@@ -109,7 +118,7 @@ def generate_dataset_images(
 
 
 def main() -> None:
-    device = "cuda" if torch.cuda.is_available() else "cpu"
+    device = get_device()
     print(f"Using device: {device}")
 
     for dataset_name, config in DATASETS_CONFIG.items():
@@ -118,10 +127,11 @@ def main() -> None:
         try:
             generate_dataset_images(
                 dataset_name=dataset_name,
-                model_id=config["model_id"],
+                lora_id=config["lora_id"],
                 classes=config["classes"],
                 prompt_template=config["prompt_template"],
                 images_per_class=config["images_per_class"],
+                device=device,
             )
         except Exception as e:
             print(f"  Error processing {dataset_name}: {e}")
