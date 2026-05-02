@@ -95,17 +95,17 @@ def prepare_sana_datasets(cfg: DictConfig) -> None:
     data_dir = path(cfg.data_dir)
     for dataset_name, template in cfg.caption_templates.items():
         source_dir = data_dir / dataset_name
-        output_train_dir = data_dir / f"{cfg.output_prefix}{dataset_name}" / "train"
+        output_dir = data_dir / f"{cfg.output_prefix}{dataset_name}"
 
         if not source_dir.exists():
             print(f"Skipping {dataset_name}: {source_dir} does not exist")
             continue
 
-        if output_train_dir.parent.exists():
-            rmtree(output_train_dir.parent)
-        output_train_dir.mkdir(parents=True)
+        if output_dir.exists():
+            rmtree(output_dir)
+        output_dir.mkdir(parents=True)
 
-        metadata_path = output_train_dir / "metadata.jsonl"
+        metadata_path = output_dir / "metadata.jsonl"
         written = 0
         with metadata_path.open("w", encoding="utf-8") as metadata_file:
             for class_dir in sorted(item for item in source_dir.iterdir() if item.is_dir()):
@@ -120,11 +120,11 @@ def prepare_sana_datasets(cfg: DictConfig) -> None:
                         continue
 
                     output_name = f"{class_dir.name}_{index:04d}{image_path.suffix.lower()}"
-                    copy2(image_path, output_train_dir / output_name)
+                    copy2(image_path, output_dir / output_name)
                     metadata_file.write(json.dumps({"file_name": output_name, "text": caption}) + "\n")
                     written += 1
 
-        print(f"Prepared {output_train_dir.parent} ({written} images)")
+        print(f"Prepared {output_dir} ({written} images)")
 
 
 def _copy_dataset_original(source_dir: Path, target_dir: Path, max_per_class: int | None = None) -> int:

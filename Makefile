@@ -8,16 +8,20 @@ include .env
 export
 endif
 
-.PHONY: help setup download-datasets prepare-sana-datasets datasets model-selection lora-finetune resnet-train resnet-eval stage1 stage2 stage3 stage3-eval prepare-resnet-data generate-synthetic resnet-data login-wandb login-hf clean clean-all
+.PHONY: help setup patch-diffusers download-datasets prepare-sana-datasets datasets model-selection lora-finetune resnet-train resnet-eval stage1 stage2 stage3 stage3-eval prepare-resnet-data generate-synthetic resnet-data login-wandb login-hf clean clean-all
 
 help:
 	@awk 'BEGIN {FS = ":.*## "} /^[a-zA-Z0-9_-]+:.*## / {printf "%-24s %s\n", $$1, $$2}' $(MAKEFILE_LIST)
 
 setup: ## Install local Diffusers example dependencies.
 	git clone --depth=1 https://github.com/huggingface/diffusers || true
+	uv run python scripts/patch_diffusers_sana.py
 	uv pip install -e diffusers
 	uv pip install -r diffusers/examples/dreambooth/requirements.txt
 	uv pip install -e .
+
+patch-diffusers: ## Patch local Diffusers SANA DreamBooth script for local metadata.jsonl datasets.
+	uv run python scripts/patch_diffusers_sana.py
 
 download-datasets: ## Download source datasets into data/.
 	uv run python scripts/download_datasets.py

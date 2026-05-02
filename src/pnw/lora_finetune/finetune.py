@@ -24,9 +24,9 @@ def validate_inputs(cfg: DictConfig) -> None:
         )
 
     missing = [
-        path(dataset.dataset_dir) / "train" / "metadata.jsonl"
+        path(dataset.dataset_dir) / "metadata.jsonl"
         for dataset in cfg.datasets
-        if not (path(dataset.dataset_dir) / "train" / "metadata.jsonl").exists()
+        if not (path(dataset.dataset_dir) / "metadata.jsonl").exists()
     ]
     if missing:
         missing_text = ", ".join(str(item) for item in missing)
@@ -51,7 +51,7 @@ def train_lora(dataset: DictConfig, cfg: DictConfig, namespace: str) -> None:
         "launch",
         str(path(cfg.train_script)),
         f"--pretrained_model_name_or_path={cfg.model_name}",
-        f"--dataset_name={path(dataset.dataset_dir) / 'train'}",
+        f"--dataset_name={path(dataset.dataset_dir)}",
         "--image_column=image",
         "--caption_column=text",
         f"--output_dir={output_dir}",
@@ -79,7 +79,7 @@ def train_lora(dataset: DictConfig, cfg: DictConfig, namespace: str) -> None:
     env["WANDB_NAME"] = str(dataset.output_name)
 
     print(f"Training {dataset.name} -> {output_dir}")
-    print(f"Using dataset {path(dataset.dataset_dir) / 'train'}")
+    print(f"Using dataset {path(dataset.dataset_dir)}")
     print(f"Pushing to {hub_model_id}")
     subprocess.run(cmd, check=True, env=env)
 
@@ -90,4 +90,3 @@ def run(cfg: DictConfig) -> None:
     namespace = hub_namespace()
     for dataset in cfg.datasets:
         train_lora(dataset, cfg, namespace)
-
